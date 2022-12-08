@@ -1,17 +1,37 @@
 package com.example.twapp;
 
+import static com.google.firebase.FirebaseApp.getInstance;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.NotificationCompat.Builder;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.media.Ringtone;
+import android.os.Build;
+import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.Log;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.annotation.SuppressLint;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
-
+import com.google.firebase.messaging.RemoteMessage;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -23,11 +43,14 @@ public class MainActivity extends AppCompatActivity {
     private Button btn_HistoryHealthConditions;
     private Button btn_AbnormalRecord;
     private Button btn_showimage;
+    private Button btn_RingChange;
+    private Button b1;
 
 
 
 
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +64,16 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "onComplete: "+token);
             }
         });
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O){
+            NotificationChannel channel =
+                    new NotificationChannel("My notification","My notification",NotificationManager.IMPORTANCE_LOW);
+
+            channel.setSound(null, null);
+            NotificationManager manager=getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+
+
 
         btn_WristbandLock = findViewById(R.id.btn_WristbandLock);
         btn_CurrentLocation = findViewById(R.id.btn_CurrentLocation);
@@ -49,8 +82,16 @@ public class MainActivity extends AppCompatActivity {
         btn_HistoryHealthConditions = findViewById(R.id.btn_HistoryHealthConditions);
         btn_AbnormalRecord = findViewById(R.id.btn_AbnormalRecord);
         btn_showimage = findViewById(R.id.btn_showimage);
+        btn_RingChange = findViewById(R.id.btn_RingChange);
+        b1 = findViewById(R.id.button);
 
 
+        b1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addNotification();
+            }
+        });
 
         btn_WristbandLock.setOnClickListener(new View.OnClickListener(){
             int flag = 0;
@@ -121,9 +162,47 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        btn_RingChange.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this,RingChange.class);
+                startActivity(intent);
+            }
+        });
+    }
 
+    private void addNotification() {
+        playNotificationSound();
+        NotificationManagerCompat managerCompat = NotificationManagerCompat.from(MainActivity.this);
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(MainActivity.this,"My notification")
+                        .setSmallIcon(R.drawable.abc)
+                        .setContentTitle("Notifications Example")
+                        .setContentText("This is a test notification")
+                        .setAutoCancel(true)
+
+                        .setSound(null);
+
+        managerCompat.notify(1, builder.build());
+
+
+        // Add as notification
 
     }
 
+    public void playNotificationSound()
+    {
+        try
+        {
 
+            Uri alarmSound =Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.ring_nokia_x_tune);
+            Ringtone sound = RingtoneManager.getRingtone(this,alarmSound);
+            sound.play();
+
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
 }
